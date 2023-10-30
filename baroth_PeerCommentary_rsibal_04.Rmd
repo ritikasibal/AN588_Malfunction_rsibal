@@ -7,7 +7,7 @@ output:
     toc: 2
 ---
 
-**Hey Ritika! Nice looking markdown file and especially nice plots in this one. You can find my comments throughout in bold. --Brooke**
+**Hey Ritika! Nice looking markdown file and especially nice plots in this one! You can find my comments throughout in bold. --Brooke**
 
 ## [1] Write a simple R function, Z.prop.test(), that can perform one- or two-sample Z-tests for proportion data, using the following guidelines:
 
@@ -57,13 +57,11 @@ return(summary)
 }
 ```
 
-**[1] Part 1 looks well organized.**
+**[1] Part 1 looks well organized, so it's easy to follow! I think we approached the function similarly.**
 
-**When I tried to use the function to run a one sample two-sided z test, it gave an error. Looking at your code, I only see options for a lower tail and upper tail test in the section for one sample tests. The directions for a two-tailed test may be missing.**
+**When I tried to use the function to run a one sample two-sided z test, it gave an error. Looking at your code, I only see options for a lower tail and upper tail test in the section for one sample tests. The directions for a two-tailed test may be missing. I also think that the two-sample section needs alternatives for lower-tail and upper-tail tests. It is possible that I have misunderstood your code though.**
 
-**When I used it to run a two-sided two sample z test, it worked. It gave the same confidence intervals that my function gave, so I am confident that we have equivalent code for that aspect. Our functions did give different test statistics and p-values. I am not confident that mine is correct, but I think there might also be a problem in your code because it produced test statistic of -infinity and a p-value of 2** 
-
-**I notice that we have used different formulas to calculate z, so that may be a place to look for edits. I also think that the two-sample section needs alternatives for lower-tail and upper-tail tests. It is possible that I have misunderstood your code though. If those operations are there, it will help to annotate what each line of the code does.**
+**When I used it to run a two-sided two sample z test, it worked. It gave the same confidence intervals that my function gave, so I am confident that we have equivalent code for that aspect. Our functions did give different test statistics and p-values. I am not sure that mine is correct, but I think there might also be a problem in yours because it produced test statistic of -infinity and a p-value of 2. I notice that we have used different formulas to calculate z, so that may be a place to look for edits.**
 
 
 ## [2] The dataset from Kamilar and Cooper has in it a large number of variables related to life history and body size. For this exercise, the end aim is to fit a simple linear regression model to predict longevity (MaxLongevity_m) measured in months from species’ brain size (Brain_Size_Species_Mean) measured in grams. Do the following for both longevity~brain size and log(longevity)~log(brain size):
@@ -88,7 +86,7 @@ p2
 
 ```
 
-**This all looks great! More specific annotations may be useful.**
+**This all looks great!**
 
 ### Identify and interpret the point estimate of the slope (β1), as well as the outcome of the test associated with the hypotheses H0: β1 = 0; HA: β1 ≠ 0. Also, find a 90 percent CI for the slope (β1) parameter.
 ``` {r Question 2.2}
@@ -147,7 +145,7 @@ predict(rline_2, newdata = data.frame(Brain_Size_Species_Mean = 800), interval =
 
 No, I do not trust these predictions. For one, the values of longevity predicted from 800 gr brain weight are all in the 1000s--and a 1000 year longevity is not possible. If we look at the graphs our data points are all clustered around the 0-200 gr range. We should not be extrapolating the relationship for values outside of this range.
 
-**I agree with your assessment that these predictions are probably not reasonable, especially the prediction from the un-transformed model. Though, I think it is measured in months rather than years, so a longevity of 1000 months would be possible for some primates (specifically humans).**
+**I agree with your assessment that these predictions are probably not reasonable, particularly the prediction from the un-transformed model.**
 
 **I think we might be supposed to use prediction intervals instead of confidence intervals for this one, but I don't entirely understand the difference between the two.**
 
@@ -155,4 +153,4 @@ No, I do not trust these predictions. For one, the values of longevity predicted
 
 Looking at our graphs, I think our log model does a better job at graphing the data. This is because by using log() we further normalize the data and can improve the linearity of the relationship.
 
-**I agree with what you say here.**
+**I agree with what you say here. Well done!**
