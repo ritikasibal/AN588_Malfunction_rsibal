@@ -1,0 +1,183 @@
+---
+title: "rsibal_FinalHomeworkCode_04.Rmd"
+author: "Ritika"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::readthedown:
+    toc: 2
+---
+
+**Hey Ritika! Nice looking markdown file and especially nice plots in this one! You can find my comments throughout in bold. --Brooke**
+
+## [1] Write a simple R function, Z.prop.test(), that can perform one- or two-sample Z-tests for proportion data, using the following guidelines:
+
+### Your function should take the following arguments: p1 and n1 (no default) representing the estimated proportion and sample size (i.e., based on your sample data); p2 and n2 (both defaulting to NULL) that contain a second sample’s proportion and sample size data in the event of a two-sample test; p0 (no default) as the expected value for the population proportion; and alternative (default “two.sided”) and conf.level (default 0.95), to be used in the same way as in the function t.test().
+### When conducting a two-sample test, it should be p1 that is tested as being smaller or larger than p2 when alternative=“less” or alternative=“greater”, the same as in the use of x and y in the function t.test().
+### The function should perform a one-sample Z-test using p1, n1, and p0 if either p2 or n2 (or both) is NULL.
+### The function should contain a check for the rules of thumb we have talked about (n∗p>5 and n∗(1−p)>5) to ensure the validity of assuming the normal distribution in both the one- and two-sample settings. If this is violated, the function should still complete but it should also print an appropriate warning message.
+### The function should return a list containing the members Z (the test statistic), P (the appropriate p value), and CI (the two-sided CI with respect to “conf.level” around p1 in the case of a one-sample test and around p2-p1 in the case of a two-sample test). For all test alternatives (“two.sided”, “greater”, “less”), calculate symmetric CIs based on quantiles of the normal distribution rather than worrying about calculating single-limit confidence bounds.
+```{r Question 1, warning=TRUE}
+Z.prop.test <- function(p1, n1, p2=NULL, n2=NULL, p0, alternative = "two.sided", conf.level=0.95){
+
+# if either p2 or n2 (or both) is NULL, perform one-sample Z-test using p1, n1, and p0.
+test_type <- if(is.null(p2) | is.null(n2)) 1 else 2
+
+lambda<-1-(1-conf.level)/2
+
+if(test_type == 1){
+  # If assumption for normality is violated, the function should still complete but it should also print an appropriate warning message.
+if (!(n1 * p0 > 5 & n1 * (1 - p0) > 5)) {
+    print("ERROR: ASSUMPTION OF NORMAL DISTRIBUTION IS NOT VALID") 
+}
+  
+  z <- (p1 - p0) / (sqrt(p0 * (1-p0)/n1))
+  if(alternative == "less"){
+    p <- pnorm(z, lower.tail = TRUE)
+  } else if(alternative == "greater"){
+    p <- pnorm(z, lower.tail = FALSE)
+  } else if (alternative == "two.sided"){
+    #https://www.r-tutor.com/elementary-statistics/hypothesis-testing/two-tailed-test-population-proportion
+    if (z <= p0){
+      p <- 2 * pnorm(z, lower.tail=TRUE)
+    } else {
+      p <- 2 * pnorm(z, lower.tail=FALSE)
+    }
+  }
+  lower <- p1 - qnorm(lambda) * sqrt(p1 * (1 - p1)/n1)
+  upper <- p1 + qnorm(lambda) * sqrt(p1 * (1 - p1)/n1)
+  ci <- c(lower, upper)
+} else if (test_type == 2){
+
+# If assumption for normality is violated, the function should still complete but it should also print an appropriate warning message.
+if (!(n1 * p0 > 5 & n1 * (1 - p0) > 5) |
+      !(n2 * p0 > 5 & n2 * (1 - p0) > 5)) {
+    print("ERROR: ASSUMPTION OF NORMAL DISTRIBUTION IS NOT VALID") 
+}
+  
+  z <- (p2 - p1) / (sqrt(p0 * (1 - p0)* ((1/n1) + (1/n2))))
+  if(alternative == "less"){
+    p <- pnorm(z, lower.tail = TRUE)
+  } else if(alternative == "greater"){
+    p <- pnorm(z, lower.tail = FALSE)
+  } else if (alternative == "two.sided") {
+    p <- 1 - pnorm(z, lower.tail = TRUE) + pnorm(z, lower.tail = FALSE)
+  }
+  ci_p = p2-p1
+  #  Found this equation here: https://www.stats4stem.org/confidence-interval-two-proportions-difference-of-proportions#:~:text=For%202%20Proportions%2FDifference%20of,1%E2%88%92%5Ep2).
+  lower <- ci_p - qnorm(lambda) * sqrt((p1 * (1 - p1))/n1 +  (p2 * (1 - p2))/n2)
+  upper <- ci_p + qnorm(lambda) * sqrt((p1 * (1 - p1)/n1) +  (p2 * (1 - p2)/n2))
+  ci <- c(lower, upper)
+}
+
+summary <- list(test_statistic=z, 
+                p_value=p,
+                confidence_interval=ci)
+return(summary)
+}
+```
+
+
+## [2] The dataset from Kamilar and Cooper has in it a large number of variables related to life history and body size. For this exercise, the end aim is to fit a simple linear regression model to predict longevity (MaxLongevity_m) measured in months from species’ brain size (Brain_Size_Species_Mean) measured in grams. Do the following for both longevity~brain size and log(longevity)~log(brain size):
+### Fit the regression model and, using {ggplot2}, produce a scatterplot with the fitted line superimposed upon the data. Append the the fitted model equation to your plot (HINT: use the function geom_text()).
+``` {r Question 2.1}
+library(curl)
+library(ggplot2)
+f <- curl("https://raw.githubusercontent.com/fuzzyatelin/fuzzyatelin.github.io/master/AN588_Fall23/KamilarAndCooperData.csv")
+kandc_data <- read.csv(f, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+
+# We have to find the regression line separately first because geom_smooth doesn't give us the coefficients. From there we can make a string (rformula) representing the regression lines 
+rline_1<-lm(formula = MaxLongevity_m ~ Brain_Size_Species_Mean, data = kandc_data)
+rformula<-paste0("y=", rline_1$coefficients[2],"x"," + ",rline_1$coefficients[1])
+p1 <- ggplot(data = kandc_data, aes(x = Brain_Size_Species_Mean, y = MaxLongevity_m)) + geom_point() + geom_smooth(method = "lm", formula = y ~ x) + geom_text(x = 300, y = 200, label = rformula)
+
+rline_2<-lm(formula = log(MaxLongevity_m) ~ log(Brain_Size_Species_Mean), data = kandc_data)
+rformula<-paste0("y=", rline_2$coefficients[2],"x"," + ",rline_2$coefficients[1])
+p2 <- ggplot(data = kandc_data, aes(x = log(Brain_Size_Species_Mean), y = log(MaxLongevity_m))) + geom_point() + geom_smooth(method = "lm", formula = y ~ x) + geom_text(x = 3, y = 4.8, label = rformula)
+
+p1
+p2
+
+```
+
+### Identify and interpret the point estimate of the slope (β1), as well as the outcome of the test associated with the hypotheses H0: β1 = 0; HA: β1 ≠ 0. Also, find a 90 percent CI for the slope (β1) parameter.
+``` {r Question 2.2}
+# For the normal regressions
+(beta1 = rline_1$coefficients[2])
+t <- coef(summary(rline_1))
+t <- data.frame(unlist(t))
+lambda<-1-(1-0.90)/2
+
+colnames(t) <- c("Est", "SE", "t", "p")
+t$lower <- t$Est - qt(lambda, df = 998) * t$SE
+t$upper <- t$Est + qt(lambda, df = 998) * t$SE
+ci <- c(t$lower, t$upper)
+(ci <- confint(rline_1, level = 0.90))  # using the results of lm())
+
+# For the log regression
+(beta1_log = rline_2$coefficients[2])
+t <- coef(summary(rline_2))
+t <- data.frame(unlist(t))
+colnames(t) <- c("Est", "SE", "t", "p")
+t$lower <- t$Est - qt(lambda, df = 998) * t$SE
+t$upper <- t$Est + qt(lambda, df = 998) * t$SE
+ci_log <- c(t$lower, t$upper)
+(ci_log <- confint(rline_2, level = 0.90))  # using the results of lm()
+```
+
+### Using your model, add lines for the 90 percent confidence and prediction interval bands on the plot and add a legend to differentiate between the lines.
+``` {r Question 2.3}
+require(gridExtra)
+pred_1 <- predict(rline_1, newdata=data.frame(kandc_data), interval = "prediction", level = 0.90) 
+
+p1 <- ggplot(data = kandc_data, aes(x = Brain_Size_Species_Mean, y = MaxLongevity_m)) + geom_point() + geom_smooth(method = "lm", formula = y ~ x) + geom_abline(aes(slope=ci[2], intercept=ci[1], color='90% Lower Band')) + geom_abline(aes(slope=ci[4], intercept=ci[3], color='90% Upper Band')) + geom_line(aes(x = Brain_Size_Species_Mean, y = pred_1[,2]), color = '90% Upper Band Prediction') +
+  geom_line(aes(x = Brain_Size_Species_Mean, y = pred_1[,3], color = '90% Lower Band Prediction'))
+
+pred_2 <- predict(rline_2, newdata=data.frame(kandc_data), interval = "prediction", level = 0.90) 
+
+p2 <- ggplot(data = kandc_data, aes(x = log(Brain_Size_Species_Mean), y = log(MaxLongevity_m))) + geom_point() + geom_smooth(method = "lm", formula = y ~ x) + geom_abline(aes(slope=ci_log[2], intercept=ci_log[1], color='90% Lower Band')) + geom_abline(aes(slope=ci_log[4], intercept=ci_log[3], color='90% Upper Band')) + geom_line(aes(x = log(Brain_Size_Species_Mean), y = pred_2[,2]), color = '90% Upper Band Prediction') +
+  geom_line(aes(x = log(Brain_Size_Species_Mean), y = pred_2[,3], color = '90% Lower Band Prediction'))
+
+p1
+p2
+
+```
+
+
+### Produce a point estimate and associated 90 percent PI for the longevity of a species whose brain weight is 800 gm. Do you trust the model to predict observations accurately for this value of the explanatory variable? Why or why not?
+``` {r Question 2.4}
+# For normal values
+predict(rline_1, newdata = data.frame(Brain_Size_Species_Mean = 800), interval = "prediction",
+    level = 0.90)  # for a single value
+
+# For log values
+predict(rline_2, newdata = data.frame(Brain_Size_Species_Mean = 800), interval = "prediction",
+    level = 0.90)  # for a single value
+```
+
+No, I do not trust these predictions. For one, the values of longevity predicted from 800 gr brain weight are all in the 1000s--and a 1000 month longevity is not likely If we look at the graphs our data points are all clustered around the 0-200 gr range. We should not be extrapolating the relationship for values outside of this range.
+
+### Looking at your two models, which do you think is better? Why?
+
+Looking at our graphs, I think our log model does a better job at graphing the data. This is because by using log() we further normalize the data and can improve the linearity of the relationship.
+
+## Reflection 
+**When I was coding:**
+
+*3 things were difficult: *
+<br> 1) Plotting the lines based on a y=mx+b formula was difficult to figure out how to do!
+<br> 2) The first function was logically hard for me to wrap my head around! I looked through the modules and had to google to make sure I was using the correct equations
+<br> 3) I had some trouble fitting the predicition lines onto the plot--ggplot remains a difficult beast for me!
+
+*3 ways your peers commentary helped you:*
+<br> 1) I had missed the less and greater options for my two sided test! My peer correctly pointed that out
+<br> 2) My peer correctly pointed out that I had left out prediciton lines on my plots!
+<br> 3) My partner also tested me code and found a problem in my equation which was very helpful!!
+
+**When I was Peer Commentating:** 
+
+*2 things you liked in your peers code:*
+<br> 1) My peer's stat's knowlegde I think was very strong. Stastically, they correctly completed everything asked of us
+<br> 2) My peer used the predict() function even for the line plotting--I was doing it more manually so that was a better way!
+
+*1 thing that could use improvement:*
+<br> 1) My peer at times was using precalculated values instead of calculating them in the script--so I encouraged them to do that!
